@@ -54,6 +54,7 @@ client.on("message", function(message){
   if (message.channel.type === "dm") return;
   if (!message.content.startsWith(prefix)) return;
 
+
   let command = message.content.split(" ")[0];
   command = command.slice(prefix.length);
 
@@ -65,12 +66,12 @@ client.on("message", function(message){
             .setDescription('Every command you put in this bot must start with `'+ prefix + '`')
 	        .addField('Fun Stuff:', 'attack\nask\nship',true)
             .addField('Link:', 'git',true)
-            .addField('Owner Only:', 'say\neval',true)
+            .addField('Owner Only:', 'say',true)
             .addField('Monitor:', 'ping\nuptime',true)
             .addField('Etc:', 'avatarurl', true)
 			.setFooter("Oswald "+ version +" Copyright 2018. Created by Alee14", "https://cdn.discordapp.com/avatars/282547024547545109/6c147a444ae328c38145ef1f74169e38.png?size=2048")
 			.setColor("#7af442")
-			message.channel.sendEmbed(embed);
+			message.channel.send({embed});
 
     }
     
@@ -159,63 +160,11 @@ commandProcessed = true;
       }
 // Owner is only allow to do this
     if(command === 'say'){
-      if(message.author.id !== config.ownerID) return;
+      if(message.author.id !== config.ownerID) return message.reply('You need Mr. Blue for this.');
       message.channel.sendMessage(args.join(" "));
       message.delete();
 
     }
-  if(command === 'eval'){
-  if(message.author.id !== config.ownerID) return;
-  const argseval = message.content.split(" ").slice(1);
-		try {
-			var code = argseval.join(" ");
-			var evaled = eval(code);
-
-			if (typeof evaled !== "string")
-				evaled = require("util").inspect(evaled);
-			message.delete();
-
-			message.channel.send({
-				embed: {
-					color: 3191350,
-					author: {
-						name: "Eval is working!",
-						icon_url: message.author.displayAvatarURL
-					},
-					fields: [{
-							name: '**:inbox_tray: Input**',
-							value: `\`\`\`js\n${code}\n\`\`\``
-						},
-						{
-							name: '**:outbox_tray: Output**',
-							value: `\`\`\`js\n${clean(evaled)}\n\`\`\``
-						}
-					],
-				}
-			})
-		} catch (err) {
-			message.delete();
-
-			message.channel.send({
-				embed: {
-					color: 3191350,
-					author: {
-						name: "Error",
-						icon_url: message.author.displayAvatarURL
-					},
-					fields: [{
-							name: '**Please check your code.**',
-							value: `\`\`\`xl\n${clean(err)}\n\`\`\``
-						},
-						{
-							name: '**Output**',
-							value: `\`\`\`js\n${clean(evaled)}\n\`\`\``
-						}
-					],
-				}
-			})
-		}
-     }
     if(command === 'ship'){
       message.channel.send(":ship: "+ message.author.username + " x " + message.guild.members.random().displayName);
     }
