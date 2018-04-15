@@ -64,7 +64,8 @@ client.on("message", function(message){
 		 var embed = new Discord.RichEmbed()
             .setTitle(`Commands for Oswald ` + version + `.`)
             .setDescription('Every command you put in this bot must start with `'+ prefix + '`')
-	        .addField('Fun Stuff:', 'attack\nask\nship',true)
+          .addField('Fun Stuff:', 'attack\nask\nship',true)
+          .addField('Moderation', 'ban\nkick',true)
             .addField('Link:', 'git',true)
             .addField('Owner Only:', 'say',true)
             .addField('Monitor:', 'ping\nuptime',true)
@@ -167,6 +168,26 @@ commandProcessed = true;
     }
     if(command === 'ship'){
       message.channel.send(":ship: "+ message.author.username + " x " + message.guild.members.random().displayName);
+    }
+
+    if(command === 'ban'){
+        const mreason = args.join(" ").slice(22);
+        if (!message.member.permissions.has('BAN_MEMBERS')) return message.reply("It looks like that you don't have the permissions to ban people.")
+        if (!message.guild.member(client.user).hasPermission('BAN_MEMBERS')) return message.reply('Uhh... I don\'t have permission to ban members.');
+        const member = message.mentions.members.first();
+        if (!member) return message.reply("Uhh... Please mention a member first.");
+        member.ban(`Banned by ${message.author.tag} Reason: ` + mreason);
+        message.reply(`**${member.user.tag}** has been banned for the reason: \n\`\`\`${mreason}.\`\`\`\n`);
+    }
+
+    if(command === 'kick'){
+      const mreason = args.join(" ").slice(22);
+      if (!message.member.permissions.has('KICK_MEMBERS')) return message.reply("It looks like that you don't have the permissions to ban people.");
+      if (!message.guild.member(client.user).hasPermission('KICK_MEMBERS')) return message.reply('Uhh... I don\'t have permission to kick members.');
+      const member = message.mentions.members.first();
+      if (!member) return message.reply("Uhh... Please mention a member first.");
+      member.kick(`Kicked by: ${message.author.tag} Reason: ` + mreason);
+      message.reply(`**${member.user.tag}** has been kicked for the reason: \n\`\`\`${mreason}.\`\`\`\n`);
     }
 
 
