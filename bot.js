@@ -18,11 +18,37 @@
  * 
  * *************************************/
 const Discord = require('discord.js');
+const fs = require('fs');
 const client = new Discord.Client();
 const config = require('./config.json');
 
 var prefix = "oswald:";
 var version = "1.0.0";
+
+client.commands = new Discord.Collection();
+client.aliases = new Discord.Collection();
+
+fs.readdir('./commands', (err, files) => {
+  if (err) console.error(err);
+  console.log(`[!] Attempting to load a total of ${files.length} commands into the memory.`);
+  files.forEach(file => {
+    try {
+      const command = require(`./commands/${file}`);
+      console.log(`[!] Attempting to load the command "${command.help.name}".`);
+      client.commands.set(command.help.name, command);
+      command.conf.aliases.forEach(alias => {
+        client.aliases.set(alias, command.help.name);
+        console.log(`[!] Attempting to load "${alias}" as an alias for "${command.help.name}"`);
+      });
+    }
+    catch (err) {
+      console.log('[X] An error has occured trying to load a command. Here is the error.');
+      console.log(err.stack);
+    }
+  });
+  console.log('[>] Command Loading complete!');
+  console.log('\n');
+});
 
 client.on('ready', () => {
        console.log("[SUCCESS] Oswald is now ready! Running version "+ version +"!");
@@ -54,35 +80,30 @@ client.on("message", function(message){
   if (message.channel.type === "dm") return;
   if (!message.content.startsWith(prefix)) return;
 
+  const args = message.content.slice(prefix.length).trim().split(/ +/g);
+  const command = args.shift();
+  let cmd;
 
-  let command = message.content.split(" ")[0];
-  command = command.slice(prefix.length);
+  if (client.commands.has(command)) {
+    cmd = client.commands.get(command);
+  } else if (client.aliases.has(command)) {
+    cmd = client.commands.get(client.aliases.get(command));
+  }
 
-  let args = message.content.split(" ").slice(1);
-
-	 if (command === 'help'){
-		 var embed = new Discord.RichEmbed()
-            .setTitle(`Commands for Oswald ` + version + `.`)
-            .setDescription('Every command you put in this bot must start with `'+ prefix + '`')
-          .addField('Fun Stuff:', 'attack\nask\nship',true)
-          .addField('Moderation', 'ban\nkick',true)
-            .addField('Link:', 'git',true)
-            .addField('Owner Only:', 'say',true)
-            .addField('Monitor:', 'ping\nuptime',true)
-            .addField('Etc:', 'avatarurl', true)
-			.setFooter("Oswald "+ version +" Copyright 2018. Created by Alee14", "https://cdn.discordapp.com/avatars/282547024547545109/6c147a444ae328c38145ef1f74169e38.png?size=2048")
-			.setColor("#7af442")
-			message.channel.send({embed});
-
+  if (cmd) {
+    if (cmd.conf.guildOnly == true) {
+      if (!message.channel.guild) {
+        return message.channel.createMessage('This command can only be ran in a guild.');
+      }
     }
-    
-    if(command === 'avatarurl'){
-        message.reply(message.author.avatarURL);
+    try {
+      cmd.run(client, message, args);
     }
-
-    if(command === 'git'){
-        message.channel.send ("Here's the github repo: https://github.com/Alee14/Oswald/");
-    } 
+    catch (e) {
+      console.error(e);
+    }
+  }
+/*
 
     if(command === 'ping'){
         message.reply("**PONG!** :ping_pong: " + Math.round(client.ping) + " ms");
@@ -128,18 +149,6 @@ client.on("message", function(message){
 commandProcessed = true;
     }
 
-    if(command === 'attack'){
-      //This command was ported from AstralMod
-        if (command.indexOf("@everyone") == -1) {
-           if (command.indexOf("@here") == -1) {
-                message.channel.send("<@" + message.author.id + "> :right_facing_fist: " + args);
-            } else {
-            message.reply("Nice try, but I ain't going to interrupt everyone who is online at this time. Kinda nice to not be bothered.");
-          }
-             } else {
-                message.reply("Nice try, but I ain't going to interrupt everyone. Kinda nice to not be bothered.");
-              }
-                        }
       if(command === 'ask'){
         var abaskanswer = [
           "Yes.",
@@ -190,15 +199,8 @@ commandProcessed = true;
       message.reply(`**${member.user.tag}** has been kicked for the reason: \n\`\`\`${mreason}.\`\`\`\n`);
     }
 
-
+*/
  });
-
-const clean = text => {
-  if (typeof(text) === "string")
-    return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
-  else
-      return text;
-}
 
  process.on('unhandledRejection', function(err, p) {
    console.log("[ERROR | UNCAUGHT PROMISE] " + err.stack);
